@@ -6,6 +6,8 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import theme from '../src/theme';
 import '../styles/global.scss'
 
+import Dashboard from '../components/Dashboard';
+
 export default function MyApp(props) {
   const { Component, pageProps } = props;
 
@@ -26,7 +28,7 @@ export default function MyApp(props) {
       <ThemeProvider theme={theme}>
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
-        <Component {...pageProps} />
+        <Dashboard {...{Component, pageProps}} />
       </ThemeProvider>
     </React.Fragment>
   );
