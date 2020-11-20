@@ -14,8 +14,9 @@ import {
   YAxis,
   HorizontalGridLines,
   VerticalGridLines,
-  LineSeries
+  LineSeriesCanvas
 } from 'react-vis';
+import { ResultsViz } from '../components/ResultsViz';
 import _ from 'lodash';
 import { useAllRunResults, useInputData, useLogs, useWarnings } from '../src/data';
 
@@ -127,68 +128,58 @@ export default function Index() {
   const logsGrouped = dataLogs ? groupByRunDate(dataLogs) : [];
 
   return (
-    <Container maxWidth="sm">
-      <Box my={4}>
+    <Container maxWidth="md">
+      <Box my={4} margin={1}>
         <Typography variant="h4" component="h1" gutterBottom>
-          {fips}
+          Run history for FIPS [{fips}]
         </Typography>
-        <XYPlot
-          width={600}
-          height={300}
-          getX={(d) => new Date(d.date)}
-          getY={(d) => d.Rt}
-          xType="time"
-          style={{backgroundColor: 'white'}}
-        >
-          <HorizontalGridLines />
-          <VerticalGridLines />
-          <XAxis />
-          <YAxis />
-          {_.map(
-            resultsGrouped,
-            (v, k) => (
-              <LineSeries data={v} key={k} color="black" opacity={0.1} />
-            )
-          )}
-        </XYPlot>
-        <XYPlot
-          width={600}
-          height={300}
-          getX={(d) => new Date(d.date)}
-          getY={(d) => d.infections}
-          xType="time"
-          style={{backgroundColor: 'white'}}
-        >
-          <HorizontalGridLines />
-          <VerticalGridLines />
-          <XAxis />
-          <YAxis />
-          {_.map(
-            resultsGrouped,
-            (v, k) => (
-              <LineSeries data={v} key={k} color="black" opacity={0.1} />
-            )
-          )}
-        </XYPlot>
-        <XYPlot
-          width={600}
-          height={300}
-          getX={(d) => new Date(d.date)}
-          getY={(d) => d.cases}
-          xType="time"
-          style={{backgroundColor: 'white'}}
-        >
-          <HorizontalGridLines />
-          <VerticalGridLines />
-          <XAxis />
-          <YAxis />
-          {_.map(
-            inputsGrouped,
-            (v, k) => (
-              <LineSeries data={v} key={k} color="black" opacity={0.1} />
-            )
-          )}
-        </XYPlot>
+      </Box>
+      <Box my={4} margin={1}>
+          <Typography variant="h6" component="h1" gutterBottom>
+            R<sub>t</sub> history
+          </Typography>
+        <Paper>
+          <ResultsViz data={resultsGrouped} measure="Rt"/>
+        </Paper>
+      </Box>
+      <Box my={4} margin={1}>
+          <Typography variant="h6" component="h1" gutterBottom>
+            Infection rate history
+          </Typography>
+        <Paper>
+          <ResultsViz data={resultsGrouped} measure="infections"/>
+        </Paper>
+      </Box>
+      <Box my={4} margin={1}>
+          <Typography variant="h6" component="h1" gutterBottom>
+            Case data history
+          </Typography>
+        <Paper>
+          <XYPlot
+            width={900}
+            height={300}
+            getX={(d) => new Date(d.date)}
+            getY={(d) => d.cases}
+            xType="time"
+            style={{backgroundColor: 'white'}}
+          >
+            <HorizontalGridLines />
+            <VerticalGridLines />
+            <XAxis />
+            <YAxis />
+            {_.map(
+              inputsGrouped,
+              (v, k) => (
+                <LineSeriesCanvas data={v} key={k} color="black" opacity={0.1} />
+              )
+            )}
+          </XYPlot>
+        </Paper>
+      </Box>
+      <Box my={4} margin={1}>
+        <Typography variant="h6" component="h1" gutterBottom>
+          All model runs
+        </Typography>
         <TableContainer className={classes.table} component={Paper}>
           <Table size="small">
             <TableHead>
@@ -216,33 +207,14 @@ export default function Index() {
                 return (
                   <Row row={{runDate, attempts, success, totalTime, successTime, warnings}}/>
                 );
-
-                // return (
-                //   <TableRow hover={true}>
-                //     <TableCell component="th" scope="row">
-                //       {runDate}
-                //     </TableCell>
-                //     <TableCell align="right">{attempts}</TableCell>
-                //     <TableCell align="right">
-                //       {success ? <CheckIcon/> : <ErrorIcon/>}
-                //     </TableCell>
-                //     <TableCell align="right">{totalTime}</TableCell>
-                //     <TableCell align="right">{successTime}</TableCell>
-                //   </TableRow>
-                // )
               }))}
             </TableBody>
           </Table>
         </TableContainer>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Next.js example
-        </Typography>
-        <Link href="/about" color="secondary">
-          Go to the about page
-        </Link>
-        <ProTip />
-        <Copyright />
       </Box>
+        {/*<Typography variant="h4" component="h1" gutterBottom>
+          Next.js example
+        </Typography>*/}
     </Container>
   );
 }

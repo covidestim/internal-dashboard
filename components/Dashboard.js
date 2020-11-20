@@ -21,13 +21,12 @@ import { mainListItems, secondaryListItems } from './listItems';
 import Chart from './Chart';
 import Deposits from './Deposits';
 import Orders from './Orders';
+import FIPSSearch from './FIPSSearch';
+import Link from 'next/link';
 
 import _ from 'lodash';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import Link from 'next/link';
-import { csv } from 'd3-fetch';
-import TextField from '@material-ui/core/TextField';
 
 function Copyright() {
   return (
@@ -137,32 +136,6 @@ export default function Dashboard(props) {
   };
   const fixedHeightPaper = clsx(classes.paper, classes.fixedHeight);
 
-  const [fipsDB, setFipsDB] = React.useState([]);
-  const [fipsQuery, setFipsQuery] = React.useState("");
-  const [fipsOnDisplay, setFipsOnDisplay] = React.useState([]);
-  const [fipsSearchMatches, setFipsSearchMatches] = React.useState([]);
-
-  React.useEffect(() => {
-    const query = fipsQuery;
-
-    let searchPred = (county) => {
-      return _.startsWith(
-        _.toLower(county.county),
-        _.toLower(_.trim(query))
-      );
-    };
-
-    const results = _.filter(fipsDB, searchPred);
-
-    setFipsSearchMatches(_.take(results, 8));
-  }, [fipsQuery]);
-
-  const handleFipsQueryChange = (event) => setFipsQuery(event.target.value);
-
-  React.useEffect(() => {
-    csv('http://localhost:3000/fips.csv').then((d) => setFipsDB(d));
-  }, []);
-
   return (
     <div className={classes.root}>
       <CssBaseline />
@@ -190,7 +163,7 @@ export default function Dashboard(props) {
             noWrap
             className={classes.title}
           >
-            Dashboard
+            Covidestim Admin Dashboard
           </Typography>
           <IconButton color="inherit">
             <Badge badgeContent={4} color="secondary">
@@ -212,22 +185,7 @@ export default function Dashboard(props) {
           </IconButton>
         </div>
         <Divider />
-        <form noValidate autoComplete="off">
-          <TextField id="fips-input" label="County Name" value={fipsQuery} onChange={handleFipsQueryChange}/>
-        </form>
-        <Divider />
-        <List>
-          {_.map(
-            fipsSearchMatches,
-            d => (
-              <Link href={`/${d.fips}`}>
-                <ListItem button>
-                  <ListItemText primary={`${d.county}, ${d.state}`}/>
-                </ListItem>
-              </Link>
-            )
-          )}
-        </List>
+        <FIPSSearch/>
         <List>
           {_.map(
             [
@@ -244,10 +202,12 @@ export default function Dashboard(props) {
             )
           )}
         </List>
+        {/*
         <Divider />
         <List>{mainListItems}</List>
         <Divider />
         <List>{secondaryListItems}</List>
+        */}
       </Drawer>
       <main className={classes.content}>
         <div className={classes.appBarSpacer} />
