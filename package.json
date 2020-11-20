@@ -6,6 +6,7 @@
     "@material-ui/core": "latest",
     "@material-ui/icons": "^4.9.1",
     "clsx": "latest",
+    "d3": "^6.2.0",
     "lodash": "^4.17.20",
     "next": "latest",
     "postgrest-client": "^1.1.2",

@@ -14,7 +14,6 @@ import Badge from '@material-ui/core/Badge';
 import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
-import Link from '@material-ui/core/Link';
 import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import NotificationsIcon from '@material-ui/icons/Notifications';
@@ -22,6 +21,13 @@ import { mainListItems, secondaryListItems } from './listItems';
 import Chart from './Chart';
 import Deposits from './Deposits';
 import Orders from './Orders';
+
+import _ from 'lodash';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import Link from 'next/link';
+import { csv } from 'd3-fetch';
+import TextField from '@material-ui/core/TextField';
 
 function Copyright() {
   return (
@@ -101,7 +107,7 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor:
       theme.palette.mode === 'light'
         ? theme.palette.grey[100]
-        : theme.palette.grey[900],
+        : theme.palette.grey[100],
     flexGrow: 1,
     height: '100vh',
     overflow: 'auto',
@@ -130,6 +136,32 @@ export default function Dashboard(props) {
     setOpen(!open);
   };
   const fixedHeightPaper = clsx(classes.paper, classes.fixedHeight);
+
+  const [fipsDB, setFipsDB] = React.useState([]);
+  const [fipsQuery, setFipsQuery] = React.useState("");
+  const [fipsOnDisplay, setFipsOnDisplay] = React.useState([]);
+  const [fipsSearchMatches, setFipsSearchMatches] = React.useState([]);
+
+  React.useEffect(() => {
+    const query = fipsQuery;
+
+    let searchPred = (county) => {
+      return _.startsWith(
+        _.toLower(county.county),
+        _.toLower(_.trim(query))
+      );
+    };
+
+    const results = _.filter(fipsDB, searchPred);
+
+    setFipsSearchMatches(_.take(results, 8));
+  }, [fipsQuery]);
+
+  const handleFipsQueryChange = (event) => setFipsQuery(event.target.value);
+
+  React.useEffect(() => {
+    csv('http://localhost:3000/fips.csv').then((d) => setFipsDB(d));
+  }, []);
 
   return (
     <div className={classes.root}>
@@ -179,6 +211,39 @@ export default function Dashboard(props) {
             <ChevronLeftIcon />
           </IconButton>
         </div>
+        <Divider />
+        <form noValidate autoComplete="off">
+          <TextField id="fips-input" label="County Name" value={fipsQuery} onChange={handleFipsQueryChange}/>
+        </form>
+        <Divider />
+        <List>
+          {_.map(
+            fipsSearchMatches,
+            d => (
+              <Link href={`/${d.fips}`}>
+                <ListItem button>
+                  <ListItemText primary={`${d.county}, ${d.state}`}/>
+                </ListItem>
+              </Link>
+            )
+          )}
+        </List>
+        <List>
+          {_.map(
+            [
+              {fips: "09009", name: "New Haven, CT"},
+              {fips: "25009", name: "Essex County, MA"},
+              {fips: "09001", name: "Fairfield County, CT"}
+            ],
+            d => (
+              <Link href={`/${d.fips}`}>
+                <ListItem button>
+                  <ListItemText primary={d.name}/>
+                </ListItem>
+              </Link>
+            )
+          )}
+        </List>
         <Divider />
         <List>{mainListItems}</List>
         <Divider />

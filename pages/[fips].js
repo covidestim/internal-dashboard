@@ -17,81 +17,135 @@ import {
   LineSeries
 } from 'react-vis';
 import _ from 'lodash';
-import { useAllRunResults } from '../src/data';
+import { useAllRunResults, useInputData, useLogs, useWarnings } from '../src/data';
+
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableContainer from '@material-ui/core/TableContainer';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Paper from '@material-ui/core/Paper';
+import { makeStyles } from '@material-ui/core/styles';
+import CheckIcon from '@material-ui/icons/Check';
+import ErrorIcon from '@material-ui/icons/Error';
+import Collapse from '@material-ui/core/Collapse';
+import IconButton from '@material-ui/core/IconButton';
+import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
+
+const useStyles = makeStyles({
+  table: {
+    minWidth: 650,
+  },
+});
+
+const useRowStyles = makeStyles({
+  root: {
+    '& > *': {
+      borderBottom: 'unset',
+    },
+  },
+});
+
+function Row(props) {
+  const { row } = props;
+  const [open, setOpen] = React.useState(false);
+  const classes = useRowStyles();
+
+  console.log("row:");
+  console.log(row);
+
+  return (
+    <React.Fragment>
+      <TableRow hover={true} className={classes.root}>
+        <TableCell>
+          <IconButton aria-label="expand row" size="small" onClick={() => setOpen(!open)}>
+            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
+        </TableCell>
+        <TableCell component="th" scope="row">
+          {row.runDate}
+        </TableCell>
+        <TableCell align="right">{row.attempts}</TableCell>
+        <TableCell align="right">{row.success ? <CheckIcon/> : <ErrorIcon/>}</TableCell>
+        <TableCell align="right">{row.totalTime}</TableCell>
+        <TableCell align="right">{row.successTime}</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box margin={1}>
+              <Typography variant="h6" gutterBottom component="div">
+                RStan warning messages
+              </Typography>
+              <Table size="small" aria-label="purchases">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Warning message</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {row.warnings.map((warning) => (
+                    <TableRow key={warning.warnings}>
+                      <TableCell component="th" scope="row">
+                        {warning.warnings}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </React.Fragment>
+  );
+}
 
 export default function Index() {
 
+  const classes = useStyles();
   const router = useRouter();
 
-  const [estimates, setEstimates] = useState({});
-  const [inputs, setInputs] = useState({});
-  const [fips, setFips] = useState(router.query.fips || "09009");
+  const fips = router.query.fips;
 
-  const {data: swrData, error: swrError} = useAllRunResults(router.query.fips || "09009");
+  const {data: dataResults, error: errorDataResults} = useAllRunResults(fips);
+  const {data: dataInputs, error: errorDataInputs} = useInputData(fips, '2020-11-01');
+  const {data: dataLogs, error: errorDataLogs} = useLogs(fips);
+  const {data: dataWarnings, error: errorDataWarnings} = useWarnings(fips);
 
-  console.log('---');
-  console.log(swrData);
-  console.log(swrError);
-  console.log('---');
-
-  var Api = new PostgREST("http://localhost:3020");
-
-  async function fetchHistory(fips) {
-    return await Api.get('/county_estimates')
-      .select(`date, infections, "run.date", Rt`)
-      .match({fips: fips})
-      .order(['"run.date"', 'date'], [true, true])
-  }
-
-  async function fetchInputs(fips) {
-    return await Api.get('/input_data')
-      .select(`date, cases, deaths, "run.date"`)
-      .match({fips: fips})
-      .order(['"run.date"', 'date'], [true, true])
-  }
+  console.log("dataWarnings:");
+  console.log(dataWarnings);
 
   function groupByRunDate(data) {
     return _.groupBy(data, (d) => d["run.date"])
   }
 
-  useEffect(() => {
-    if (router.query.fips && router.query.fips.length === 5)
-      setFips(router.query.fips);
-  }, [router]);
-
-  useEffect(() => {
-    if (fips.length === 5)
-      fetchHistory(fips).then((data) => {setEstimates(data)});
-  }, [fips]);
-
-  useEffect(() => {
-    if (fips.length === 5)
-      fetchInputs(fips).then((data) => {setInputs(data)});
-  }, [fips]);
-
-  const dataForChart = groupByRunDate(estimates);
-  const inputsForChart = groupByRunDate(inputs);
-
-  const handleChange = (event) => {
-    setFips(event.target.value);
-  };
+  const resultsGrouped = dataResults ? groupByRunDate(dataResults) : [];
+  const inputsGrouped = dataInputs ? groupByRunDate(dataInputs) : [];
+  const logsGrouped = dataLogs ? groupByRunDate(dataLogs) : [];
 
   return (
     <Container maxWidth="sm">
       <Box my={4}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          {fips}
+        </Typography>
         <XYPlot
           width={600}
           height={300}
           getX={(d) => new Date(d.date)}
           getY={(d) => d.Rt}
           xType="time"
+          style={{backgroundColor: 'white'}}
         >
           <HorizontalGridLines />
           <VerticalGridLines />
           <XAxis />
           <YAxis />
           {_.map(
-            dataForChart,
+            resultsGrouped,
             (v, k) => (
               <LineSeries data={v} key={k} color="black" opacity={0.1} />
             )
@@ -103,13 +157,14 @@ export default function Index() {
           getX={(d) => new Date(d.date)}
           getY={(d) => d.infections}
           xType="time"
+          style={{backgroundColor: 'white'}}
         >
           <HorizontalGridLines />
           <VerticalGridLines />
           <XAxis />
           <YAxis />
           {_.map(
-            dataForChart,
+            resultsGrouped,
             (v, k) => (
               <LineSeries data={v} key={k} color="black" opacity={0.1} />
             )
@@ -121,18 +176,64 @@ export default function Index() {
           getX={(d) => new Date(d.date)}
           getY={(d) => d.cases}
           xType="time"
+          style={{backgroundColor: 'white'}}
         >
           <HorizontalGridLines />
           <VerticalGridLines />
           <XAxis />
           <YAxis />
           {_.map(
-            inputsForChart,
+            inputsGrouped,
             (v, k) => (
               <LineSeries data={v} key={k} color="black" opacity={0.1} />
             )
           )}
         </XYPlot>
+        <TableContainer className={classes.table} component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell/>
+                <TableCell>Run date</TableCell>
+                <TableCell align="right">Attempts</TableCell>
+                <TableCell align="right">Success?</TableCell>
+                <TableCell align="right">Total time&nbsp;(min)</TableCell>
+                <TableCell align="right">Success time&nbsp;(min)</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {_.reverse(_.map(groupByRunDate(dataLogs), (d) => {
+                const runDate = d[0]["run.date"];
+                const attempts = d.length;
+                const successfulIdx = _.findIndex(d, (run) => run.success);
+                const success = successfulIdx > -1;
+                const totalTime = Math.round(_.sumBy(d, (run) => run.time)/60);
+                const successTime = success ? Math.round(d[successfulIdx].time/60) : "NA";
+                const warnings = _.filter(
+                  dataWarnings, (d) => (d["run.date"] == runDate)
+                );
+
+                return (
+                  <Row row={{runDate, attempts, success, totalTime, successTime, warnings}}/>
+                );
+
+                // return (
+                //   <TableRow hover={true}>
+                //     <TableCell component="th" scope="row">
+                //       {runDate}
+                //     </TableCell>
+                //     <TableCell align="right">{attempts}</TableCell>
+                //     <TableCell align="right">
+                //       {success ? <CheckIcon/> : <ErrorIcon/>}
+                //     </TableCell>
+                //     <TableCell align="right">{totalTime}</TableCell>
+                //     <TableCell align="right">{successTime}</TableCell>
+                //   </TableRow>
+                // )
+              }))}
+            </TableBody>
+          </Table>
+        </TableContainer>
         <Typography variant="h4" component="h1" gutterBottom>
           Next.js example
         </Typography>
