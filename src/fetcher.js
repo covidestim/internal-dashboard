@@ -6,6 +6,9 @@ export default async function fetcher(endpoint, params) {
   const api_url = 'http://localhost:3010';
   const Api = new PostgREST(api_url);
 
-  return await Api.get(endpoint).match(params);
+  if (params)
+    return await Api.get(endpoint).match(params);
+
+  return await Api.get(endpoint);
 }
 

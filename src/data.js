@@ -41,9 +41,18 @@ function useWarnings(fips) {
   );
 }
 
+function useFailedRuns() {
+  return useSWR(
+    ['/failed_runs'],
+    fetcher,
+    { refreshInterval: 0 }
+  );
+}
+
 export {
   useAllRunResults,
   useInputData,
   useLogs,
   useWarnings,
+  useFailedRuns
 };
