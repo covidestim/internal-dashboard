@@ -3,7 +3,6 @@ import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 import ProTip from '../src/ProTip';
-import Link from '../src/Link';
 import Copyright from '../src/Copyright';
 import { useRouter } from 'next/router';
 
@@ -16,7 +15,7 @@ import {
   VerticalGridLines,
   LineSeriesCanvas
 } from 'react-vis';
-import { ResultsViz } from '../components/ResultsViz';
+import { ResultsVizZoomable } from '../components/ResultsViz';
 import _ from 'lodash';
 import { useAllRunResults, useInputData, useLogs, useWarnings } from '../src/data';
 
@@ -53,9 +52,6 @@ function Row(props) {
   const { row } = props;
   const [open, setOpen] = React.useState(false);
   const classes = useRowStyles();
-
-  console.log("row:");
-  console.log(row);
 
   return (
     <React.Fragment>
@@ -111,19 +107,14 @@ export default function Index() {
 
   const fips = router.query.fips;
 
-  const {data: dataResults, error: errorDataResults} = useAllRunResults(fips);
   const {data: dataInputs, error: errorDataInputs} = useInputData(fips, '2020-11-01');
   const {data: dataLogs, error: errorDataLogs} = useLogs(fips);
   const {data: dataWarnings, error: errorDataWarnings} = useWarnings(fips);
-
-  console.log("dataWarnings:");
-  console.log(dataWarnings);
 
   function groupByRunDate(data) {
     return _.groupBy(data, (d) => d["run.date"])
   }
 
-  const resultsGrouped = dataResults ? groupByRunDate(dataResults) : [];
   const inputsGrouped = dataInputs ? groupByRunDate(dataInputs) : [];
   const logsGrouped = dataLogs ? groupByRunDate(dataLogs) : [];
 
@@ -139,7 +130,7 @@ export default function Index() {
             R<sub>t</sub> history
           </Typography>
         <Paper>
-          <ResultsViz data={resultsGrouped} measure="Rt"/>
+          <ResultsVizZoomable fips={fips} measure="Rt"/>
         </Paper>
       </Box>
       <Box my={4} margin={1}>
@@ -147,7 +138,7 @@ export default function Index() {
             Infection rate history
           </Typography>
         <Paper>
-          <ResultsViz data={resultsGrouped} measure="infections"/>
+          <ResultsVizZoomable fips={fips} measure="infections"/>
         </Paper>
       </Box>
       <Box my={4} margin={1}>
