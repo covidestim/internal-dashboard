@@ -202,9 +202,9 @@ export default function Dashboard(props) {
             )
           )}
         </List>
-        {/*
         <Divider />
         <List>{mainListItems}</List>
+        {/*
         <Divider />
         <List>{secondaryListItems}</List>
         */}

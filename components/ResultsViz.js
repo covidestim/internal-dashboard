@@ -4,8 +4,8 @@ import {
   YAxis,
   HorizontalGridLines,
   VerticalGridLines,
-  LineSeries,
-  MarkSeries,
+  LineSeriesCanvas,
+  MarkSeriesCanvas,
   Highlight
 } from 'react-vis';
 import _ from 'lodash';
@@ -54,11 +54,11 @@ export function ResultsVizZoomable (props) {
       {_.map(
         resultsGrouped,
         (v, k) => (
-          <LineSeries data={v} key={k} color="black" opacity={0.1} />
+          <LineSeriesCanvas data={v} key={k} color="black" opacity={0.1} />
         )
       )}
 
-      <MarkSeries
+      <MarkSeriesCanvas
         data={_.map(resultsGrouped, (d) => _.maxBy(d, (day) => day.date))}
         color="red" size={1}
       />

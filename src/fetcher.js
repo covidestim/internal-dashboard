@@ -3,7 +3,7 @@ import PostgREST from 'postgrest-client';
 export default async function fetcher(endpoint, params) {
   console.log(`GETting ${endpoint}`);
 
-  const api_url = 'http://localhost:3010';
+  const api_url = 'https://covidestim-test.herokuapp.com';
   const Api = new PostgREST(api_url);
 
   if (params)
