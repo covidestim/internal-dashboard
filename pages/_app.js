@@ -26,18 +26,11 @@ export default function MyApp(props) {
         <title>My page</title>
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       </Head>
-      <SWRConfig
-        value={{
-          refreshInterval: 0,
-          dedupingInterval: 1000*60*60
-        }}
-      >
         <ThemeProvider theme={theme}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
           <Dashboard {...{Component, pageProps}} />
         </ThemeProvider>
-      </SWRConfig>
     </React.Fragment>
   );
 }

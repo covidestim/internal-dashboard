@@ -11,6 +11,16 @@ function useAllRunResults(fips) {
   );
 }
 
+function useAllRunResultsDev(fips) {
+  const shouldFetch = fips && fips.length === 5;
+
+  return useSWR(
+    shouldFetch ? ['/all_runs_dev', fips] : null,
+    (endpoint, fips) => fetcher(endpoint, {fips: fips}),
+    { refreshInterval: 0 }
+  );
+}
+
 function useInputData(fips, runDate) {
   const shouldFetch = runDate && fips && fips.length === 5;
 
@@ -51,6 +61,7 @@ function useFailedRuns() {
 
 export {
   useAllRunResults,
+  useAllRunResultsDev,
   useInputData,
   useLogs,
   useWarnings,
