@@ -10,6 +10,7 @@ import BarChartIcon from '@material-ui/icons/BarChart';
 import LayersIcon from '@material-ui/icons/Layers';
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import WarningIcon from '@material-ui/icons/Warning';
+import MapIcon from '@material-ui/icons/Map';
 
 import Link from 'next/link';
 
@@ -21,6 +22,14 @@ export const mainListItems = (
       </ListItemIcon>
       <Link href="/failed">
         <ListItemText primary="Failed runs" />
+      </Link>
+    </ListItem>
+    <ListItem button>
+      <ListItemIcon>
+        <MapIcon />
+      </ListItemIcon>
+      <Link href="/">
+        <ListItemText primary="Test counties" />
       </Link>
     </ListItem>
   </div>

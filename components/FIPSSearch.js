@@ -39,7 +39,7 @@ export default function FIPSSearch() {
   return (
     <>
       <form noValidate autoComplete="off">
-        <TextField id="fips-input" label="County Name" value={fipsQuery} onChange={handleFipsQueryChange}/>
+        <TextField id="fips-input" label="Search for a county..." value={fipsQuery} onChange={handleFipsQueryChange}/>
       </form>
       <Divider />
       <List>

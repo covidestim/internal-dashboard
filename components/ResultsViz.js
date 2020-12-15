@@ -25,11 +25,6 @@ export function ResultsVizZoomable (props) {
   const { data, error }       = useAllRunResults(fips);
   const { data: dataDev, error: errorDev } = useAllRunResultsDev(fips);
 
-  console.log(data);
-  console.log(error);
-  console.log(dataDev);
-  console.log(errorDev);
-
   const resultsGrouped        = data    && groupByRunDate(data);
   const resultsGroupedDev     = dataDev && groupByRunDate(dataDev);
 

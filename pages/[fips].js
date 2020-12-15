@@ -13,11 +13,22 @@ import {
   YAxis,
   HorizontalGridLines,
   VerticalGridLines,
-  LineSeriesCanvas
+  LineSeries,
+  VerticalBarSeries
 } from 'react-vis';
+
+import sma from 'sma';
+
 import { ResultsVizZoomable } from '../components/ResultsViz';
 import _ from 'lodash';
-import { useAllRunResults, useInputData, useLogs, useWarnings } from '../src/data';
+import {
+  useAllRunResults,
+  useInputData,
+  useLogs,
+  useLogsDev,
+  useWarnings,
+  useWarningsDev
+} from '../src/data';
 
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -47,6 +58,49 @@ const useRowStyles = makeStyles({
     },
   },
 });
+
+function LogTable(props) {
+
+  const classes = useStyles();
+
+  const logsSorted  = _.sortBy(props.logs, (d) => d["run.date"]);
+  const logsGrouped = groupByRunDate(logsSorted);
+  const logRows     = _.map(logsGrouped, (d) => {
+    const runDate = d[0]["run.date"];
+    const attempts = d.length;
+    const successfulIdx = _.findIndex(d, (run) => run.success);
+    const success = successfulIdx > -1;
+    const totalTime = Math.round(_.sumBy(d, (run) => run.time)/60);
+    const successTime = success ? Math.round(d[successfulIdx].time/60) : "NA";
+    const warnings = _.filter(
+      props.warnings, (d) => (d["run.date"] == runDate)
+    );
+
+    return (
+      <Row row={{runDate, attempts, success, totalTime, successTime, warnings}}/>
+    );
+  })
+
+  return (
+    <TableContainer className={classes.table} component={Paper}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell/>
+            <TableCell>Run date</TableCell>
+            <TableCell align="right">Attempts</TableCell>
+            <TableCell align="right">Success?</TableCell>
+            <TableCell align="right">Total time&nbsp;(min)</TableCell>
+            <TableCell align="right">Success time&nbsp;(min)</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {_.reverse(logRows)}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}
 
 function Row(props) {
   const { row } = props;
@@ -100,22 +154,77 @@ function Row(props) {
   );
 }
 
+function groupByRunDate(data) {
+  return _.groupBy(data, (d) => d["run.date"])
+}
+
+
+function InputData(props) {
+
+  const {data: dataInputs, error: errorDataInputs} = useInputData(props.fips);
+
+  const { metric } = props;
+
+  const d = dataInputs ? dataInputs : [];
+
+  const minDate = _.minBy(d, (d) => d.date);
+  const maxDate = _.maxBy(d, (d) => d.date);
+
+  const xRange = minDate ? [new Date(minDate.date).getTime(), new Date(maxDate.date).getTime()] : undefined;
+
+  const color = metric === 'cases' ? 'grey' : 'black';
+
+  var sma_7d = sma(
+    _.map(d, (s) => s[metric]),
+    7,
+    n => n
+  );
+
+  sma_7d = [0,0,0,0,0,0].concat(sma_7d); // First 6 elements aren't part of sma
+
+  const sma_zipped = _.zipWith(
+    _.map(d, (d) => d.date),
+    sma_7d,
+    (date, avg) => {
+      var d = {date: date};
+      d[metric] = avg;
+      return d;
+    }
+  );
+
+  console.log(sma_zipped);
+
+  return (
+    <XYPlot
+      width={900}
+      height={300}
+      xDomain={xRange}
+      getX={(d) => new Date(d.date)}
+      getY={(d) => d[metric]}
+      xType="time"
+      style={{backgroundColor: 'white'}}
+    >
+      <HorizontalGridLines />
+      <VerticalGridLines />
+      <XAxis tickTotal={10} />
+      <YAxis />
+      <VerticalBarSeries data={d} color={color} opacity={1} />
+      <LineSeries data={sma_zipped} color="blue" />
+    </XYPlot>
+  );
+}
+
 export default function Index() {
 
-  const classes = useStyles();
   const router = useRouter();
 
   const fips = router.query.fips;
 
-  const {data: dataInputs, error: errorDataInputs} = useInputData(fips, '2020-11-01');
   const {data: dataLogs, error: errorDataLogs} = useLogs(fips);
+  const {data: dataLogsDev, error: errorDataLogsDev} = useLogsDev(fips);
   const {data: dataWarnings, error: errorDataWarnings} = useWarnings(fips);
+  const {data: dataWarningsDev, error: errorDataWarningsDev} = useWarningsDev(fips);
 
-  function groupByRunDate(data) {
-    return _.groupBy(data, (d) => d["run.date"])
-  }
-
-  const inputsGrouped = dataInputs ? groupByRunDate(dataInputs) : [];
   const logsGrouped = dataLogs ? groupByRunDate(dataLogs) : [];
 
   return (
@@ -143,69 +252,56 @@ export default function Index() {
       </Box>
       <Box my={4} margin={1}>
           <Typography variant="h6" component="h1" gutterBottom>
-            Case data history
+            Cumulative incidence
           </Typography>
         <Paper>
-          <XYPlot
-            width={900}
-            height={300}
-            getX={(d) => new Date(d.date)}
-            getY={(d) => d.cases}
-            xType="time"
-            style={{backgroundColor: 'white'}}
-          >
-            <HorizontalGridLines />
-            <VerticalGridLines />
-            <XAxis />
-            <YAxis />
-            {_.map(
-              inputsGrouped,
-              (v, k) => (
-                <LineSeriesCanvas data={v} key={k} color="black" opacity={0.1} />
-              )
-            )}
-          </XYPlot>
+          <ResultsVizZoomable fips={fips} measure="cum.incidence"/>
+        </Paper>
+      </Box>
+      <Box my={4} margin={1}>
+          <Typography variant="h6" component="h1" gutterBottom>
+            # Symptomatic
+          </Typography>
+        <Paper>
+          <ResultsVizZoomable fips={fips} measure="symptomatic"/>
+        </Paper>
+      </Box>
+      <Box my={4} margin={1}>
+          <Typography variant="h6" component="h1" gutterBottom>
+            Fitted Cases
+          </Typography>
+        <Paper>
+          <ResultsVizZoomable fips={fips} measure="cases.fitted"/>
+        </Paper>
+      </Box>
+      <Box my={4} margin={1}>
+          <Typography variant="h6" component="h1" gutterBottom>
+            Case data history - Latest
+          </Typography>
+        <Paper>
+          <InputData fips={fips} metric={"cases"}/>
+        </Paper>
+      </Box>
+      <Box my={4} margin={1}>
+          <Typography variant="h6" component="h1" gutterBottom>
+            Death data - Latest
+          </Typography>
+        <Paper>
+          <InputData fips={fips} metric={"deaths"}/>
         </Paper>
       </Box>
       <Box my={4} margin={1}>
         <Typography variant="h6" component="h1" gutterBottom>
-          All model runs
+          Experimental model runs
         </Typography>
-        <TableContainer className={classes.table} component={Paper}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell/>
-                <TableCell>Run date</TableCell>
-                <TableCell align="right">Attempts</TableCell>
-                <TableCell align="right">Success?</TableCell>
-                <TableCell align="right">Total time&nbsp;(min)</TableCell>
-                <TableCell align="right">Success time&nbsp;(min)</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {_.reverse(_.map(groupByRunDate(dataLogs), (d) => {
-                const runDate = d[0]["run.date"];
-                const attempts = d.length;
-                const successfulIdx = _.findIndex(d, (run) => run.success);
-                const success = successfulIdx > -1;
-                const totalTime = Math.round(_.sumBy(d, (run) => run.time)/60);
-                const successTime = success ? Math.round(d[successfulIdx].time/60) : "NA";
-                const warnings = _.filter(
-                  dataWarnings, (d) => (d["run.date"] == runDate)
-                );
-
-                return (
-                  <Row row={{runDate, attempts, success, totalTime, successTime, warnings}}/>
-                );
-              }))}
-            </TableBody>
-          </Table>
-        </TableContainer>
       </Box>
-        {/*<Typography variant="h4" component="h1" gutterBottom>
-          Next.js example
-        </Typography>*/}
+      <LogTable logs={dataLogsDev} warnings={dataWarningsDev}/>
+      <Box my={4} margin={1}>
+        <Typography variant="h6" component="h1" gutterBottom>
+          Production model runs
+        </Typography>
+      </Box>
+      <LogTable logs={dataLogs} warnings={dataWarnings}/>
     </Container>
   );
 }

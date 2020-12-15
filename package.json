@@ -14,9 +14,11 @@
     "prop-types": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "react-simple-maps": "^2.3.0",
     "react-vis": "^1.11.7",
     "recharts": "^1.8.5",
     "sass": "^1.29.0",
+    "sma": "^0.1.1",
     "swr": "^0.3.9"
   },
   "scripts": {

@@ -18,20 +18,17 @@ import {
 } from 'react-vis';
 import _ from 'lodash';
 
+import MapChart from '../components/MapChart';
+
 export default function Index() {
 
 
   return (
-    <Container maxWidth="sm">
+    <Container maxWidth="lg">
       <Box my={4}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Next.js example
-        </Typography>
-        <Link href="/about" color="secondary">
-          Go to the about page
-        </Link>
-        <ProTip />
-        <Copyright />
+        <div>
+          <MapChart/>
+        </div>
       </Box>
     </Container>
   );
