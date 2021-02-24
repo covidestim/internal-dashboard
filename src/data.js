@@ -23,12 +23,22 @@ function useAllRunResultsDev(fips) {
   );
 }
 
-function useInputData(fips) {
+function useLatestInputData(fips) {
   const shouldFetch = isCounty(fips);
 
   return useSWR(
     shouldFetch ? ['/latest_inputs', fips] : null,
-    (endpoint, fips, date) => fetcher(endpoint, { fips, fips }),
+    (endpoint, fips, date) => fetcher(endpoint, { fips }),
+    { refreshInterval: 0 }
+  );
+}
+
+function useInputData(fips, date) {
+  const shouldFetch = isCounty(fips);
+
+  return useSWR(
+    shouldFetch ? ['/inputs', fips, date] : null,
+    (endpoint, fips, date) => fetcher(endpoint, { fips, rundate: date }),
     { refreshInterval: 0 }
   );
 }
@@ -93,6 +103,7 @@ export {
   useAllRunResults,
   useAllRunResultsDev,
   useInputData,
+  useLatestInputData,
   useLogs,
   useLogsDev,
   useWarnings,

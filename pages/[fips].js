@@ -6,24 +6,12 @@ import ProTip from '../src/ProTip';
 import Copyright from '../src/Copyright';
 import { useRouter } from 'next/router';
 
-import PostgREST from 'postgrest-client';
-import {
-  XYPlot,
-  XAxis,
-  YAxis,
-  HorizontalGridLines,
-  VerticalGridLines,
-  LineSeries,
-  VerticalBarSeries
-} from 'react-vis';
-
-import sma from 'sma';
-
 import { ResultsVizZoomable } from '../components/ResultsViz';
+import { InputData } from '../components/InputData';
 import _ from 'lodash';
 import {
   useAllRunResults,
-  useInputData,
+  useLatestInputData,
   useLogs,
   useLogsDev,
   useWarnings,
@@ -77,7 +65,10 @@ function LogTable(props) {
     );
 
     return (
-      <Row row={{runDate, attempts, success, totalTime, successTime, warnings}}/>
+      <Row
+        fips={props.fips}
+        row={{runDate, attempts, success, totalTime, successTime, warnings}}
+      />
     );
   })
 
@@ -103,7 +94,7 @@ function LogTable(props) {
 }
 
 function Row(props) {
-  const { row } = props;
+  const { row, fips } = props;
   const [open, setOpen] = React.useState(false);
   const classes = useRowStyles();
 
@@ -147,6 +138,12 @@ function Row(props) {
                 </TableBody>
               </Table>
             </Box>
+            <Paper>
+              <InputData date={row.runDate} fips={fips} metric={"cases"}/>
+            </Paper>
+            <Paper>
+              <InputData date={row.runDate} fips={fips} metric={"deaths"}/>
+            </Paper>
           </Collapse>
         </TableCell>
       </TableRow>
@@ -156,60 +153,6 @@ function Row(props) {
 
 function groupByRunDate(data) {
   return _.groupBy(data, (d) => d["run.date"])
-}
-
-
-function InputData(props) {
-
-  const {data: dataInputs, error: errorDataInputs} = useInputData(props.fips);
-
-  const { metric } = props;
-
-  const d = dataInputs ? dataInputs : [];
-
-  const minDate = _.minBy(d, (d) => d.date);
-  const maxDate = _.maxBy(d, (d) => d.date);
-
-  const xRange = minDate ? [new Date(minDate.date).getTime(), new Date(maxDate.date).getTime()] : undefined;
-
-  const color = metric === 'cases' ? 'grey' : 'black';
-
-  var sma_7d = sma(
-    _.map(d, (s) => s[metric]),
-    7,
-    n => n
-  );
-
-  sma_7d = [0,0,0,0,0,0].concat(sma_7d); // First 6 elements aren't part of sma
-
-  const sma_zipped = _.zipWith(
-    _.map(d, (d) => d.date),
-    sma_7d,
-    (date, avg) => {
-      var d = {date: date};
-      d[metric] = avg;
-      return d;
-    }
-  );
-
-  return (
-    <XYPlot
-      width={900}
-      height={300}
-      xDomain={xRange}
-      getX={(d) => new Date(d.date)}
-      getY={(d) => d[metric]}
-      xType="time"
-      style={{backgroundColor: 'white'}}
-    >
-      <HorizontalGridLines />
-      <VerticalGridLines />
-      <XAxis tickTotal={10} />
-      <YAxis />
-      <VerticalBarSeries data={d} color={color} opacity={1} />
-      <LineSeries data={sma_zipped} color="blue" />
-    </XYPlot>
-  );
 }
 
 export default function Index() {
@@ -293,13 +236,13 @@ export default function Index() {
           Experimental model runs
         </Typography>
       </Box>
-      <LogTable logs={dataLogsDev} warnings={dataWarningsDev}/>
+      <LogTable fips={fips} logs={dataLogsDev} warnings={dataWarningsDev}/>
       <Box my={4} margin={1}>
         <Typography variant="h6" component="h1" gutterBottom>
           Production model runs
         </Typography>
       </Box>
-      <LogTable logs={dataLogs} warnings={dataWarnings}/>
+      <LogTable fips={fips} logs={dataLogs} warnings={dataWarnings}/>
     </Container>
   );
 }
