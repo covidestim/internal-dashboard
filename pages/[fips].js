@@ -192,8 +192,6 @@ function InputData(props) {
     }
   );
 
-  console.log(sma_zipped);
-
   return (
     <XYPlot
       width={900}

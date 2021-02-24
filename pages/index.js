@@ -27,7 +27,8 @@ export default function Index() {
     <Container maxWidth="lg">
       <Box my={4}>
         <div>
-          <MapChart/>
+          <MapChart geo={'county'}/>
+          <MapChart geo={'state'}/>
         </div>
       </Box>
     </Container>

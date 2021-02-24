@@ -1,18 +1,20 @@
 import useSWR from 'swr';
 import fetcher from './fetcher';
 
-function useAllRunResults(fips) {
-  const shouldFetch = fips && fips.length === 5;
+const isCounty = (fips) => { return fips && new RegExp(/^[0-9]{5}$/).test(fips) }
 
+function useAllRunResults(geo) {
   return useSWR(
-    shouldFetch ? ['/all_runs', fips] : null,
-    (endpoint, fips) => fetcher(endpoint, {fips: fips}),
+    [isCounty(geo) ? '/all_runs' : '/all_state_runs', geo],
+    isCounty(geo) ?
+      (endpoint, fips)  => fetcher(endpoint, {fips: fips}) :
+      (endpoint, state) => fetcher(endpoint, {state: state}),
     { refreshInterval: 0 }
   );
 }
 
 function useAllRunResultsDev(fips) {
-  const shouldFetch = fips && fips.length === 5;
+  const shouldFetch = isCounty(fips);
 
   return useSWR(
     shouldFetch ? ['/all_runs_dev', fips] : null,
@@ -22,7 +24,7 @@ function useAllRunResultsDev(fips) {
 }
 
 function useInputData(fips) {
-  const shouldFetch = fips && fips.length === 5;
+  const shouldFetch = isCounty(fips);
 
   return useSWR(
     shouldFetch ? ['/latest_inputs', fips] : null,
@@ -32,7 +34,7 @@ function useInputData(fips) {
 }
 
 function useLogs(fips) {
-  const shouldFetch = fips && fips.length === 5;
+  const shouldFetch = isCounty(fips);
 
   return useSWR(
     shouldFetch ? ['/logs', fips] : null,
@@ -42,7 +44,7 @@ function useLogs(fips) {
 }
 
 function useLogsDev(fips) {
-  const shouldFetch = fips && fips.length === 5;
+  const shouldFetch = isCounty(fips);
 
   return useSWR(
     shouldFetch ? ['/logs_dev', fips] : null,
@@ -52,7 +54,7 @@ function useLogsDev(fips) {
 }
 
 function useWarnings(fips) {
-  const shouldFetch = fips && fips.length === 5;
+  const shouldFetch = isCounty(fips);
 
   return useSWR(
     shouldFetch ? ['/warnings', fips] : null,
@@ -62,7 +64,7 @@ function useWarnings(fips) {
 }
 
 function useWarningsDev(fips) {
-  const shouldFetch = fips && fips.length === 5;
+  const shouldFetch = isCounty(fips);
 
   return useSWR(
     shouldFetch ? ['/warnings_dev', fips] : null,
